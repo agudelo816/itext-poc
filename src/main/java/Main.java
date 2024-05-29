@@ -27,11 +27,14 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+;
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
+        // Register the BouncyCastle provider
+        Security.addProvider(new BouncyCastleProvider());
         createKeystore("keystore.p12", "password", "alias");
 
         String dest = "table_example.pdf";
