@@ -8,33 +8,31 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.signatures.*;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.security.*;
-import java.security.cert.Certificate;
-import java.util.Arrays;
-import java.util.List;
-//import sun.security.tools.keytool.CertAndKeyGen;
-//import sun.security.x509.X500Name;
-import java.security.cert.X509Certificate;
-import java.math.BigInteger;
-
-import java.util.Date;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.math.BigInteger;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
         // Register the BouncyCastle provider
         Security.addProvider(new BouncyCastleProvider());
+
         createKeystore("keystore.p12", "password", "alias");
 
         String dest = "table_example.pdf";
@@ -44,6 +42,12 @@ public class Main {
         float[] columnWidths = new float[columnNames.size()];
         Arrays.fill(columnWidths, 25);
 
+        createPdf(dest, columnNames, columnWidths);
+        signPdf(dest, signedDest, "keystore.p12", "password", "alias", "Test Signer", "Test Reason", "Test Location");
+        passwordProtectPdf(signedDest, passwordProtectedDest, "ownerPassword", "userPassword");
+    }
+
+    private static void createPdf(String dest, List<String> columnNames, float[] columnWidths) throws Exception {
         PdfWriter writer = createPdfWriter(dest);
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf);
@@ -54,12 +58,6 @@ public class Main {
 
         document.add(table);
         document.close();
-
-        // Sign the PDF
-        signPdf(dest, signedDest, "keystore.p12", "password", "alias", "Test Signer", "Test Reason", "Test Location");
-
-        // Password protect the signed PDF
-        passwordProtectPdf(signedDest, passwordProtectedDest, "ownerPassword", "userPassword");
     }
 
     private static PdfWriter createPdfWriter(String dest) throws Exception {
@@ -119,7 +117,7 @@ public class Main {
 
         // Generate a self-signed certificate
         X500Name issuer = new X500Name("CN=Test, L=London, C=GB");
-        BigInteger serialNumber = BigInteger.valueOf(new SecureRandom().nextInt());
+        BigInteger serialNumber = BigInteger.valueOf(new SecureRandom().nextInt() & 0x7fffffff);
         Date notBefore = new Date();
         Date notAfter = new Date(notBefore.getTime() + (365 * 24 * 60 * 60 * 1000L));
         X500Name subject = issuer; // Self-signed, so issuer is the same as subject
@@ -127,9 +125,9 @@ public class Main {
         X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
                 issuer, serialNumber, notBefore, notAfter, subject, keyPair.getPublic());
 
-        ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256WithRSA").build(privateKey);
+        ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256WithRSA").setProvider("BC").build(privateKey);
         X509CertificateHolder certHolder = certBuilder.build(contentSigner);
-        X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
+        X509Certificate cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
 
         // Create a keystore and set the entry
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
