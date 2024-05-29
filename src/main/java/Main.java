@@ -1,12 +1,4 @@
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.*;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Cell;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.signatures.*;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -23,9 +15,7 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 public class Main {
 
@@ -35,55 +25,28 @@ public class Main {
 
         createKeystore("keystore.p12", "password", "alias");
 
-        String dest = "table_example.pdf";
-        String signedDest = "signed_table_example.pdf";
-        String passwordProtectedDest = "protected_table_example.pdf";
-        List<String> columnNames = Arrays.asList("Column 1", "Column 2", "Column 3");
-        float[] columnWidths = new float[columnNames.size()];
-        Arrays.fill(columnWidths, 25);
+        // Paths for the input PDF, signed PDF, and password-protected PDF
+        String inputPdf = "input.pdf";
+        String signedPdf = "signed_input.pdf";
+        String passwordProtectedPdf = "protected_input.pdf";
 
-        createPdf(dest, columnNames, columnWidths);
-        signPdf(dest, signedDest, "keystore.p12", "password", "alias", "Test Signer", "Test Reason", "Test Location");
-        passwordProtectPdf(signedDest, passwordProtectedDest, "ownerPassword", "userPassword");
+        // Sign the PDF using the keystore
+        signPdf(inputPdf, signedPdf, "keystore.p12", "password", "alias");
+
+        // Password protect the signed PDF
+        passwordProtectPdf(signedPdf, passwordProtectedPdf, "ownerPassword", "userPassword");
     }
 
-    private static void createPdf(String dest, List<String> columnNames, float[] columnWidths) throws Exception {
-        PdfWriter writer = createPdfWriter(dest);
-        PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
-
-        PdfFont font = PdfFontFactory.createFont(com.itextpdf.io.font.constants.StandardFonts.HELVETICA);
-        Table table = createTable(columnWidths);
-        addHeaderCells(table, columnNames, font);
-
-        document.add(table);
-        document.close();
-    }
-
-    private static PdfWriter createPdfWriter(String dest) throws Exception {
-        return new PdfWriter(dest);
-    }
-
-    private static Table createTable(float[] columnWidths) {
-        Table table = new Table(UnitValue.createPercentArray(columnWidths));
-        table.setWidth(UnitValue.createPercentValue(100));
-        return table;
-    }
-
-    private static void addHeaderCells(Table table, List<String> columnNames, PdfFont font) {
-        for (String columnName : columnNames) {
-            Paragraph paragraphCell = new Paragraph(columnName);
-            paragraphCell.setFont(font);
-            paragraphCell.setFontSize(10);
-            paragraphCell.setTextAlignment(TextAlignment.CENTER);
-            Cell cell = new Cell();
-            cell.add(paragraphCell);
-            table.addHeaderCell(cell);
-        }
-    }
-
-    private static void signPdf(String src, String dest, String keystorePath, String keystorePassword, String alias,
-                                String signerName, String reason, String location) throws Exception {
+    /**
+     * Signs a PDF document using a keystore.
+     * @param src The source PDF file path.
+     * @param dest The destination signed PDF file path.
+     * @param keystorePath The keystore file path.
+     * @param keystorePassword The keystore password.
+     * @param alias The alias of the key in the keystore.
+     * @throws Exception If an error occurs during signing.
+     */
+    private static void signPdf(String src, String dest, String keystorePath, String keystorePassword, String alias) throws Exception {
         KeyStore ks = KeyStore.getInstance("PKCS12");
         ks.load(new FileInputStream(keystorePath), keystorePassword.toCharArray());
         PrivateKey pk = (PrivateKey) ks.getKey(alias, keystorePassword.toCharArray());
@@ -99,6 +62,14 @@ public class Main {
         signer.signDetached(digest, pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CMS);
     }
 
+    /**
+     * Password protects a PDF document.
+     * @param src The source PDF file path.
+     * @param dest The destination password-protected PDF file path.
+     * @param ownerPassword The owner password.
+     * @param userPassword The user password.
+     * @throws Exception If an error occurs during password protection.
+     */
     private static void passwordProtectPdf(String src, String dest, String ownerPassword, String userPassword) throws Exception {
         PdfReader reader = new PdfReader(src);
         PdfWriter writer = new PdfWriter(dest, new WriterProperties().setStandardEncryption(
@@ -108,6 +79,13 @@ public class Main {
         pdfDoc.close();
     }
 
+    /**
+     * Creates a keystore with a self-signed certificate.
+     * @param keystorePath The keystore file path.
+     * @param keystorePassword The keystore password.
+     * @param alias The alias of the key in the keystore.
+     * @throws Exception If an error occurs during keystore creation.
+     */
     public static void createKeystore(String keystorePath, String keystorePassword, String alias) throws Exception {
         // Generate a key pair
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
