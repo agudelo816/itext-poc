@@ -110,53 +110,6 @@ public class Main {
         pdfDoc.close();
     }
 
-//    public static void createKeystore(String keystorePath, String keystorePassword, String alias) throws Exception {
-//        // Generate a key pair
-//        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-//        keyGen.initialize(2048);
-//        KeyPair keyPair = keyGen.generateKeyPair();
-//        PrivateKey privateKey = keyPair.getPrivate();
-//
-//        // Generate a self-signed certificate
-//        CertAndKeyGen certGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
-//        certGen.setKeyPair(keyPair);
-//
-//        X509Certificate cert = certGen.getSelfCertificate(
-//                new X500Name("CN=Test, L=London, C=GB"), new Date(), (long) 365 * 24 * 60 * 60);
-//
-//        // Create a keystore and set the entry
-//        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-//        keyStore.load(null, null);
-//        keyStore.setKeyEntry(alias, privateKey, keystorePassword.toCharArray(), new Certificate[]{cert});
-//
-//        // Save the keystore to a file
-//        try (FileOutputStream fos = new FileOutputStream(keystorePath)) {
-//            keyStore.store(fos, keystorePassword.toCharArray());
-//        }
-//    }
-//
-//    public static void createKeystore(String keystorePath, String keystorePassword, String alias) throws Exception {
-//        // Generate a key pair and self-signed certificate
-//        CertAndKeyGen keyGen = new CertAndKeyGen("RSA", "SHA256WithRSA");
-//        keyGen.generate(2048);
-//
-//        X500Name x500Name = new X500Name("CN=Test, L=London, C=GB");
-//        X509Certificate[] chain = new X509Certificate[1];
-//        chain[0] = keyGen.getSelfCertificate(x500Name, new Date(), (long) 365 * 24 * 60 * 60);
-//
-//        PrivateKey privateKey = keyGen.getPrivateKey();
-//
-//        // Create a keystore and set the entry
-//        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-//        keyStore.load(null, null);
-//        keyStore.setKeyEntry(alias, privateKey, keystorePassword.toCharArray(), chain);
-//
-//        // Save the keystore to a file
-//        try (FileOutputStream fos = new FileOutputStream(keystorePath)) {
-//            keyStore.store(fos, keystorePassword.toCharArray());
-//        }
-//    }
-
     public static void createKeystore(String keystorePath, String keystorePassword, String alias) throws Exception {
         // Generate a key pair
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
